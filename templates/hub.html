@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hub de Análises · Skills and Go</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header class="hub-header">
+    <div class="hub-header-inner">
+      <a class="brand" href="{{ url_for('landing') }}">Hub de Análises</a>
+      <button class="btn btn-primary" id="open-add">+ Adicionar análise</button>
+    </div>
+  </header>
+
+  <main class="hub-main">
+    <div class="toolbar">
+      <input
+        type="search"
+        id="search"
+        class="search"
+        placeholder="Buscar por título, descrição ou autor…"
+        autocomplete="off"
+      />
+      <div class="filters" id="filters">
+        <button class="chip chip-active" data-tag="">Todas</button>
+        {% for tag in tags %}
+        <button class="chip" data-tag="{{ tag }}">{{ tag }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="status" class="status"></div>
+    <section class="grid" id="grid" aria-live="polite"></section>
+    <div id="empty" class="empty" hidden>
+      Nenhuma análise encontrada. Que tal <button class="linklike" id="open-add-2">adicionar a primeira</button>?
+    </div>
+  </main>
+
+  <!-- Modal de adição -->
+  <div class="modal-overlay" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 id="modal-title">Adicionar análise</h2>
+        <button class="modal-close" id="close-add" aria-label="Fechar">×</button>
+      </div>
+      <form id="add-form" class="form">
+        <label>
+          Título <span class="req">*</span>
+          <input name="title" required maxlength="140" placeholder="Ex: Análise de churn por coorte" />
+        </label>
+        <label>
+          Descrição
+          <textarea name="description" rows="3" placeholder="Em 1-2 frases, o que essa análise mostra?"></textarea>
+        </label>
+        <div class="form-row">
+          <label>
+            Tag
+            <select name="tag">
+              {% for tag in tags %}
+              <option value="{{ tag }}">{{ tag }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            Seu nome <span class="req">*</span>
+            <input name="author" required maxlength="80" placeholder="Como você quer aparecer" />
+          </label>
+        </div>
+        <label>
+          Link do código (GitHub / CodeSandbox)
+          <input name="github_link" type="url" placeholder="https://github.com/…" />
+        </label>
+        <label>
+          Imagem / screenshot (URL)
+          <input name="image_url" type="url" placeholder="https://… (opcional)" />
+        </label>
+        <div class="form-error" id="form-error" hidden></div>
+        <div class="form-actions">
+          <button type="button" class="btn" id="cancel-add">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submit-add">Publicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

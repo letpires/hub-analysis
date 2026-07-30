@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hub de Análises · Skills and Go</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body class="landing">
+  <main class="landing-inner">
+    <div class="hero-icon" aria-hidden="true">
+      <!-- ilustração desenhada à mão: um gráfico num papel -->
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- folha / moldura -->
+        <path d="M24 16 C22 16 20 18 20 20 L20 82 C20 84 22 86 24 86 L78 86 C80 86 82 84 82 82 L82 26 L72 15 L24 16 Z"
+              stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M72 15 L72 26 L82 26" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- eixos -->
+        <path d="M31 33 L31 74 L71 74" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- linha do gráfico (subindo, com leve tremor de traço à mão) -->
+        <path d="M33 66 C39 63 41 55 46 55 C51 55 51 61 56 59 C61 57 61 43 67 40"
+              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- pontos de dados -->
+        <circle cx="33" cy="66" r="2.6" fill="currentColor"/>
+        <circle cx="46" cy="55" r="2.6" fill="currentColor"/>
+        <circle cx="56" cy="59" r="2.6" fill="currentColor"/>
+        <circle cx="67" cy="40" r="2.6" fill="currentColor"/>
+        <!-- brilho / faísca -->
+        <path d="M75 33 L75 41 M71 37 L79 37" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <h1 class="landing-title">Hub de Análises</h1>
+
+    <p class="landing-desc">
+      Um espaço coletivo da turma do <strong>Skills and Go</strong> para compartilhar
+      análises, gráficos e técnicas de dados. Poste o seu experimento, descubra o dos
+      colegas e aprenda junto — sem burocracia, sem aprovação: publicou, apareceu.
+    </p>
+
+    <div class="landing-actions">
+      <a class="btn-hero btn-hero-primary" href="{{ url_for('hub') }}">Ver o Hub</a>
+      <a class="btn-hero btn-hero-ghost" href="{{ url_for('hub') }}?add=1">+ Adicionar análise</a>
+    </div>
+  </main>
+
+  <footer class="landing-footer">
+    Feito pela turma · Skills and Go
+  </footer>
+</body>
+</html>
