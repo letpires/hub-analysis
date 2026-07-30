@@ -50,6 +50,17 @@ isso você gerencia direto no painel do Supabase.
 
 Tags disponíveis: `exploratória`, `limpeza`, `visualização`, `estatística`, `clínica`.
 
+### Imagens (upload)
+
+As imagens são **enviadas como arquivo** (não é link) e guardadas no **Supabase
+Storage**, no bucket público `analyses-images` (máx. 5 MB; PNG, JPG, WEBP ou GIF).
+
+- O front-end envia o arquivo para `POST /api/upload`, que o repassa ao Storage e
+  devolve a URL pública — essa URL é salva em `analyses.image_url`.
+- Posts antigos que usaram **link** (Google Drive, GitHub, Dropbox) são convertidos
+  automaticamente para a URL direta na hora de exibir. No caso do Google Drive, o
+  arquivo precisa estar compartilhado como "qualquer pessoa com o link".
+
 ## Rodar localmente
 
 ```bash

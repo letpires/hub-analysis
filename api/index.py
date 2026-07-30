@@ -1,4 +1,5 @@
 import os
+import uuid
 import requests
 from flask import Flask, render_template, request, jsonify
 
@@ -11,6 +12,10 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, "static"),
 )
 
+# Limite do corpo da requisição (upload de imagem). O Vercel também limita
+# o corpo de funções serverless a ~4.5 MB, então mantemos abaixo disso.
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB
+
 # Configuração do Supabase. Em produção, defina estas variáveis no Vercel.
 # A chave publishable/anon é pública por design — o RLS protege a tabela.
 SUPABASE_URL = os.environ.get(
@@ -22,8 +27,21 @@ SUPABASE_KEY = os.environ.get(
 
 REST_URL = f"{SUPABASE_URL}/rest/v1/analyses"
 
+# Storage: bucket público para os screenshots das análises.
+BUCKET = "analyses-images"
+STORAGE_URL = f"{SUPABASE_URL}/storage/v1/object"
+
 # Tags permitidas (mantém o dropdown e a validação em sincronia).
 TAGS = ["exploratória", "limpeza", "visualização", "estatística", "clínica"]
+
+# Extensão -> content-type aceito no upload.
+ALLOWED_IMAGE_TYPES = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/webp": "webp",
+    "image/gif": "gif",
+}
 
 
 def _headers(extra=None):
@@ -101,6 +119,49 @@ def create_analysis():
         if exc.response is not None:
             detail = exc.response.text
         return jsonify({"error": f"Falha ao salvar: {exc}", "detail": detail}), 502
+
+
+@app.route("/api/upload", methods=["POST"])
+def upload_image():
+    """Recebe um arquivo de imagem e guarda no Supabase Storage.
+    Retorna a URL pública, que o front-end usa como image_url."""
+    file = request.files.get("file")
+    if file is None or file.filename == "":
+        return jsonify({"error": "Nenhum arquivo enviado."}), 400
+
+    content_type = (file.mimetype or "").lower()
+    ext = ALLOWED_IMAGE_TYPES.get(content_type)
+    if ext is None:
+        return jsonify(
+            {"error": "Formato não suportado. Use PNG, JPG, WEBP ou GIF."}
+        ), 400
+
+    data = file.read()
+    if len(data) > app.config["MAX_CONTENT_LENGTH"]:
+        return jsonify({"error": "Imagem muito grande (máx. 5 MB)."}), 400
+
+    # Nome único e seguro para o objeto no bucket.
+    object_name = f"{uuid.uuid4().hex}.{ext}"
+
+    try:
+        resp = requests.post(
+            f"{STORAGE_URL}/{BUCKET}/{object_name}",
+            headers={
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": content_type,
+                "x-upsert": "true",
+            },
+            data=data,
+            timeout=30,
+        )
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        detail = exc.response.text if exc.response is not None else ""
+        return jsonify({"error": f"Falha no upload: {exc}", "detail": detail}), 502
+
+    public_url = f"{STORAGE_URL}/public/{BUCKET}/{object_name}"
+    return jsonify({"url": public_url}), 201
 
 
 # Necessário para o runtime do Vercel (WSGI espera uma variável `app`).

@@ -11,6 +11,14 @@
   var formError = document.getElementById("form-error");
   var submitBtn = document.getElementById("submit-add");
 
+  // Upload de imagem
+  var fileInput = document.getElementById("image-file");
+  var uploadBtn = document.getElementById("upload-btn");
+  var uploadLabel = document.getElementById("upload-label");
+  var previewWrap = document.getElementById("upload-preview");
+  var previewImg = document.getElementById("preview-img");
+  var previewRemove = document.getElementById("preview-remove");
+
   var state = { items: [], tag: "", query: "" };
 
   // ---------- helpers ----------
@@ -33,10 +41,29 @@
     }
   }
 
+  // Converte links de compartilhamento comuns em URL direta de imagem,
+  // para que posts antigos (ex.: link do Google Drive) também apareçam.
+  function toDirectImage(url) {
+    if (!url) return "";
+    var m;
+    // Google Drive: .../file/d/ID/view  ou  ...?id=ID  ou  open?id=ID
+    m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) ||
+        url.match(/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([^&]+)/);
+    if (m) return "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1000";
+    // GitHub blob -> raw
+    m = url.match(/^https?:\/\/github\.com\/(.+?)\/blob\/(.+)$/);
+    if (m) return "https://raw.githubusercontent.com/" + m[1] + "/" + m[2];
+    // Dropbox -> raw
+    if (/dropbox\.com\//.test(url)) {
+      return url.replace(/([?&])dl=0/, "$1raw=1").replace(/([?&])dl=1/, "$1raw=1");
+    }
+    return url;
+  }
+
   // ---------- rendering ----------
   function cardHtml(item) {
     var link = safeUrl(item.github_link);
-    var img = safeUrl(item.image_url);
+    var img = safeUrl(toDirectImage(item.image_url));
 
     var thumb = img
       ? '<div class="card-thumb"><img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.parentNode.innerHTML=\'<span class=&quot;placeholder&quot;>sem imagem</span>&#39;;"></div>'
@@ -134,28 +161,78 @@
     if (e.key === "Escape" && !modal.hidden) closeModal();
   });
 
+  // ---------- upload de imagem (seleção + preview) ----------
+  uploadBtn.addEventListener("click", function () {
+    fileInput.click();
+  });
+
+  function clearFile() {
+    fileInput.value = "";
+    previewWrap.hidden = true;
+    previewImg.removeAttribute("src");
+    uploadLabel.textContent = "Escolher imagem…";
+  }
+
+  previewRemove.addEventListener("click", clearFile);
+
+  fileInput.addEventListener("change", function () {
+    var f = fileInput.files && fileInput.files[0];
+    if (!f) return clearFile();
+    if (f.size > 5 * 1024 * 1024) {
+      formError.textContent = "Imagem muito grande (máx. 5 MB).";
+      formError.hidden = false;
+      return clearFile();
+    }
+    formError.hidden = true;
+    uploadLabel.textContent = f.name;
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      previewImg.src = ev.target.result;
+      previewWrap.hidden = false;
+    };
+    reader.readAsDataURL(f);
+  });
+
+  // Envia o arquivo para /api/upload e resolve com a URL pública (ou "").
+  function uploadIfNeeded() {
+    var f = fileInput.files && fileInput.files[0];
+    if (!f) return Promise.resolve("");
+    var body = new FormData();
+    body.append("file", f);
+    return fetch("/api/upload", { method: "POST", body: body })
+      .then(function (r) {
+        return r.json().then(function (b) {
+          if (!r.ok) throw new Error(b.error || "Falha no upload da imagem.");
+          return b.url || "";
+        });
+      });
+  }
+
   // ---------- submit ----------
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     formError.hidden = true;
-    var fd = new FormData(form);
-    var payload = {
-      title: fd.get("title"),
-      description: fd.get("description"),
-      tag: fd.get("tag"),
-      author: fd.get("author"),
-      github_link: fd.get("github_link"),
-      image_url: fd.get("image_url"),
-    };
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Publicando…";
 
-    fetch("/api/analyses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
+    uploadIfNeeded()
+      .then(function (imageUrl) {
+        var fd = new FormData(form);
+        var payload = {
+          title: fd.get("title"),
+          description: fd.get("description"),
+          tag: fd.get("tag"),
+          author: fd.get("author"),
+          github_link: fd.get("github_link"),
+          image_url: imageUrl,
+        };
+        return fetch("/api/analyses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      })
       .then(function (r) {
         return r.json().then(function (body) {
           return { ok: r.ok, body: body };
@@ -170,6 +247,7 @@
         statusEl.textContent = state.items.length + " análises";
         render();
         form.reset();
+        clearFile();
         closeModal();
       })
       .catch(function (err) {

@@ -73,8 +73,18 @@
           <input name="github_link" type="url" placeholder="https://github.com/…" />
         </label>
         <label>
-          Imagem / screenshot (URL)
-          <input name="image_url" type="url" placeholder="https://… (opcional)" />
+          Imagem / screenshot <span class="opt">(opcional)</span>
+          <div class="upload" id="upload">
+            <input type="file" name="image" id="image-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+            <button type="button" class="upload-btn" id="upload-btn">
+              <span id="upload-label">Escolher imagem…</span>
+            </button>
+            <span class="upload-hint">PNG, JPG, WEBP ou GIF · até 5 MB</span>
+          </div>
+          <div class="upload-preview" id="upload-preview" hidden>
+            <img id="preview-img" alt="pré-visualização" />
+            <button type="button" class="preview-remove" id="preview-remove" aria-label="Remover imagem">×</button>
+          </div>
         </label>
         <div class="form-error" id="form-error" hidden></div>
         <div class="form-actions">

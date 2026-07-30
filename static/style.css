@@ -334,6 +334,43 @@ button { font-family: inherit; cursor: pointer; }
 }
 .form textarea { resize: vertical; }
 .req { color: #b4432c; }
+.opt { color: var(--ink-faint); font-weight: 400; }
+
+/* ---------- Upload ---------- */
+.upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.upload-btn {
+  border: 1px dashed var(--ink-faint);
+  background: var(--bg-soft);
+  color: var(--ink);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.upload-btn:hover { border-color: var(--ink); background: var(--bg); }
+.upload-hint { font-size: 12px; color: var(--ink-faint); font-weight: 400; }
+.upload-preview {
+  position: relative;
+  margin-top: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  max-width: 220px;
+}
+.upload-preview img { display: block; width: 100%; height: auto; }
+.preview-remove {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.preview-remove:hover { background: rgba(0,0,0,.8); }
 .form-error {
   background: #fbeae6; color: #b4432c;
   padding: 10px 12px; border-radius: 8px; font-size: 13px;
